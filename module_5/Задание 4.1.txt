@@ -1,0 +1,6 @@
+SELECT a.city,
+       count(a.airport_code)
+FROM dst_project.airports a
+GROUP BY city
+HAVING count(a.airport_code) > 1
+ORDER BY 2 DESC

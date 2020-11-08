@@ -1,0 +1,19 @@
+--Вопрос 1
+SELECT s.fare_conditions,
+       count(s.fare_conditions)
+FROM dst_project.seats s
+WHERE s.aircraft_code = 'SU9'
+GROUP BY s.fare_conditions
+ORDER BY 2 DESC
+
+--Вопрос 2
+SELECT b.*
+FROM dst_project.bookings b
+ORDER BY 3
+LIMIT 1
+
+--Вопрос 3
+SELECT bp.seat_no
+FROM dst_project.tickets t
+LEFT JOIN dst_project.boarding_passes bp ON t.ticket_no = bp.ticket_no
+WHERE t.passenger_id = '4313 788533'

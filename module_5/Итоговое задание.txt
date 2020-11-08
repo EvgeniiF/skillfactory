@@ -1,0 +1,138 @@
+SELECT fl.flight_id flight_id, -- ID рейса
+ a_d.city город_вылета, -- выделили город вылета (Анапа)
+ a_a.city город_прилета, -- выделили города прилета
+ fl.scheduled_departure вылет, -- выделили даные по вылету
+ fl.scheduled_arrival прлет, -- выделили данные по прилету
+ fl.aircraft_code aircraft_code, -- выделил код самолета каждого рейса
+ a_d.longitude долгота_Анапы, -- выделили долготу Анапы
+ a_d.latitude широта_Анапы, -- выделили широту Анапы
+ a_a.longitude долгота_города_прилета, -- выделили долготу города прилета
+ a_a.latitude широта_города_прилета, -- выделили широту города прилета
+ ac.arange максимальная_дальность_для_самолета, -- выделили расчетную дальность для самолета, выполняющего рейс
+ fl.actual_arrival - actual_departure фактическая_длительность, -- выделили фактическую длительность каждого рейса
+ fl.actual_departure - scheduled_departure задержка_вылета, -- выделили задержку вылета каждого рейса
+ fl.actual_arrival - scheduled_arrival задержка_прибытия, -- выделили задержку прибытия каждого рейса
+ st_b.count_buisness бизнесс_класс, -- выделили доступное количество мест бизнесс класса на каждом рейсе
+ st_c.count_comfort комфорт_класс, -- выделили доступное количество мест комфорт класса на каждом рейсе
+ st_e.count_economy эконом_класс, -- выделили доступное количество мест эконом класса на каждом рейсе
+ st.count_seats количество_мест, -- выделили доступное количество мест на каждом рейсе
+ tf_b_c.count_passengers пассажиры_бизнес_класса, -- выделили количество пассажиров бизнес класса на каждом рейсе
+ tf_c_c.count_passengers пассажиры_комфорт_класса, -- выделили количество пассажиров комфорт класса на каждом рейсе
+ tf_e_c.count_passengers пассажиры_эконом_класса, -- выделили количество пассажиров эконом класса на каждом рейсе
+ bp.count_passengers количество_пассажиров, -- выделили количество пассажиров на каждом рейсе
+ tf_b_s.sum_amount стоимость_бизнес_класса, -- выделили стоимость билетов бизнес класса на каждом рейсе
+ tf_с_s.sum_amount стоимость_комфорт_класса, -- выделили стоимость билетов комфорт класса на каждом рейсе
+ tf_e_s.sum_amount стоимость_эконом_класса -- выделили стоимость билетов эконом класса на каждом рейсе
+FROM dst_project.flights fl -- добавляем столбцы с фактическим количеством пасажиров на каждом рейсе
+
+LEFT JOIN
+  (SELECT bp.flight_id flight_id,
+          count(bp.flight_id) count_passengers
+   FROM dst_project.boarding_passes bp
+   GROUP BY bp.flight_id) bp ON fl.flight_id = bp.flight_id -- добавляем столбцы с доступным количеством мест каждого класса
+
+LEFT JOIN
+  (SELECT st.aircraft_code aircraft_code,
+          st.fare_conditions fare_conditions,
+          count(st.fare_conditions) count_buisness
+   FROM dst_project.seats st
+   GROUP BY st.aircraft_code,
+            st.fare_conditions
+   HAVING st.fare_conditions = 'Business') st_b ON fl.aircraft_code = st_b.aircraft_code
+LEFT JOIN
+  (SELECT st.aircraft_code aircraft_code,
+          st.fare_conditions fare_conditions,
+          count(st.fare_conditions) count_comfort
+   FROM dst_project.seats st
+   GROUP BY st.aircraft_code,
+            st.fare_conditions
+   HAVING st.fare_conditions = 'Comfort') st_c ON fl.aircraft_code = st_c.aircraft_code
+LEFT JOIN
+  (SELECT st.aircraft_code aircraft_code,
+          st.fare_conditions fare_conditions,
+          count(st.fare_conditions) count_economy
+   FROM dst_project.seats st
+   GROUP BY st.aircraft_code,
+            st.fare_conditions
+   HAVING st.fare_conditions = 'Economy') st_e ON fl.aircraft_code = st_e.aircraft_code -- добавляем столбец с общим доступным количеством мест
+
+LEFT JOIN
+  (SELECT st.aircraft_code aircraft_code,
+          count(st.aircraft_code) count_seats
+   FROM dst_project.seats st
+   GROUP BY st.aircraft_code) st ON fl.aircraft_code = st.aircraft_code -- добавляем столбцы с количеством пассажиров для каждого класса на рейсе
+
+LEFT JOIN
+  (SELECT tf.flight_id flight_id,
+          tf.fare_conditions fare_conditions,
+          count(tf.flight_id) count_passengers
+   FROM dst_project.ticket_flights tf
+   GROUP BY tf.flight_id,
+            tf.fare_conditions
+   HAVING tf.fare_conditions = 'Business') tf_b_c ON bp.flight_id = tf_b_c.flight_id
+LEFT JOIN
+  (SELECT tf.flight_id flight_id,
+          tf.fare_conditions fare_conditions,
+          count(tf.flight_id) count_passengers
+   FROM dst_project.ticket_flights tf
+   GROUP BY tf.flight_id,
+            tf.fare_conditions
+   HAVING tf.fare_conditions = 'Comfort') tf_c_c ON bp.flight_id = tf_c_c.flight_id
+LEFT JOIN
+  (SELECT tf.flight_id flight_id,
+          tf.fare_conditions fare_conditions,
+          count(tf.flight_id) count_passengers
+   FROM dst_project.ticket_flights tf
+   GROUP BY tf.flight_id,
+            tf.fare_conditions
+   HAVING tf.fare_conditions = 'Economy') tf_e_c ON bp.flight_id = tf_e_c.flight_id -- добавляем столбцы с совокупной стоимостью билетов для каждого класса на рейсе
+
+LEFT JOIN
+  (SELECT tf.flight_id flight_id,
+          tf.fare_conditions fare_conditions,
+          sum(tf.amount) sum_amount
+   FROM dst_project.ticket_flights tf
+   GROUP BY tf.flight_id,
+            tf.fare_conditions
+   HAVING tf.fare_conditions = 'Business') tf_b_s ON bp.flight_id = tf_b_s.flight_id
+LEFT JOIN
+  (SELECT tf.flight_id flight_id,
+          tf.fare_conditions fare_conditions,
+          sum(tf.amount) sum_amount
+   FROM dst_project.ticket_flights tf
+   GROUP BY tf.flight_id,
+            tf.fare_conditions
+   HAVING tf.fare_conditions = 'Comfort') tf_с_s ON bp.flight_id = tf_с_s.flight_id
+LEFT JOIN
+  (SELECT tf.flight_id flight_id,
+          tf.fare_conditions fare_conditions,
+          sum(tf.amount) sum_amount
+   FROM dst_project.ticket_flights tf
+   GROUP BY tf.flight_id,
+            tf.fare_conditions
+   HAVING tf.fare_conditions = 'Economy') tf_e_s ON bp.flight_id = tf_e_s.flight_id -- добавляем столбец с координатами широты и долготы Анапы
+
+LEFT JOIN
+  (SELECT a.airport_code airport_code,
+          a.city city,
+          a.longitude longitude,
+          a.latitude latitude
+   FROM dst_project.airports a
+   WHERE a.airport_code = 'AAQ' ) a_d ON fl.departure_airport = a_d.airport_code -- добавляем столбцы с названием города прилета, а также его широту и долготу
+
+LEFT JOIN
+  (SELECT a.airport_code airport_code,
+          a.city city,
+          a.longitude longitude,
+          a.latitude latitude
+   FROM dst_project.airports a) a_a ON fl.arrival_airport = a_a.airport_code -- добавляем столбец с расчетной дальностью для модели самолета, выполняющей рейс
+
+LEFT JOIN
+  (SELECT a.aircraft_code aircraft_code,
+          a.range arange
+   FROM dst_project.aircrafts a) ac ON fl.aircraft_code = ac.aircraft_code
+WHERE fl.departure_airport = 'AAQ'
+  AND (date_trunc('month', fl.scheduled_departure) in ('2017-01-01',
+                                                       '2017-02-01',
+                                                       '2017-12-01'))
+  AND fl.status not in ('Cancelled')

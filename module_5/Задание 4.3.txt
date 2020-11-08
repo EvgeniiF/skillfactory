@@ -1,0 +1,34 @@
+--Вопрос 1
+SELECT count(f.flight_id)
+FROM dst_project.flights f
+WHERE f.status = 'Cancelled'
+
+--Вопрос 2
+SELECT count(a.aircraft_code)
+FROM dst_project.aircrafts a
+WHERE a.model like 'Boeing%'
+
+SELECT count(a.aircraft_code)
+FROM dst_project.aircrafts a
+WHERE a.model like 'Sukhoi Superjet%'
+
+SELECT count(a.aircraft_code)
+FROM dst_project.aircrafts a
+WHERE a.model like 'Airbus%'
+
+--Вопрос 3
+SELECT count(a.airport_code)
+FROM dst_project.airports a
+WHERE a.timezone like 'Asia%'
+
+SELECT count(a.airport_code)
+FROM dst_project.airports a
+WHERE a.timezone like 'Europe%'
+
+--Вопрос 4
+select f.flight_id, 
+    f.actual_arrival - f.scheduled_arrival задержка
+from dst_project.flights f
+where f.actual_arrival is not null and f.scheduled_arrival is not null
+order by 2 desc
+limit 1

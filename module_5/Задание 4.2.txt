@@ -1,0 +1,21 @@
+--Вопрос 1
+SELECT count(DISTINCT f.status)
+FROM dst_project.flights f
+
+--Вопрос 2
+SELECT count(f.flight_id)
+FROM dst_project.flights f
+WHERE f.status = 'Departed'
+
+--Вопрос 3
+SELECT count(s.aircraft_code)
+FROM dst_project.seats s
+WHERE s.aircraft_code = '773'
+
+--Вопрос 4
+SELECT count(f.flight_id)
+FROM dst_project.flights f
+WHERE (f.actual_departure BETWEEN '2017-04-01 00:00:00' AND '2017-09-01 00:00:00'
+       OR f.actual_arrival BETWEEN '2017-04-01 00:00:00' AND '2017-09-01 00:00:00')
+  AND f.status = 'Arrived'
+  AND f.status != 'Cancelled'

@@ -1,0 +1,23 @@
+--Вопрос 1
+select f.scheduled_departure
+from dst_project.flights f
+order by 1
+limit 1
+
+--Вопрос 2 и Вопрос 3
+SELECT f.departure_airport,
+       f.arrival_airport,
+       f.scheduled_arrival - f.scheduled_departure flight_time,
+       EXTRACT (HOUR
+                FROM (f.scheduled_arrival - f.scheduled_departure)) * 60 + EXTRACT (MINUTE
+                                                                                    FROM (f.scheduled_arrival - f.scheduled_departure)) minutes_of_flihgt
+FROM dst_project.flights f
+ORDER BY minutes_of_flihgt DESC
+
+--Вопрос 4
+SELECT (EXTRACT (HOUR
+                 FROM (sum(f.scheduled_arrival - f.scheduled_departure)))*60 + EXTRACT (MINUTE
+                                                                                        FROM (sum(f.scheduled_arrival - f.scheduled_departure)))) / count(f.flight_id)
+FROM dst_project.flights f
+WHERE f.actual_arrival IS NOT NULL
+  AND f.actual_departure IS NOT NULL
